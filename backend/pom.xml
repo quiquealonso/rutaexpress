@@ -152,6 +152,12 @@
             <artifactId>minio</artifactId>
             <version>${minio.version}</version>
         </dependency>
+        <!-- MinIO 8.6 usa OkHttp 5: en Maven el artefacto "okhttp" no trae clases, van en "okhttp-jvm" -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp-jvm</artifactId>
+            <version>5.1.0</version>
+        </dependency>
 
         <!-- Mapeo DTO -->
         <dependency>
