@@ -1,0 +1,191 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "cli": {
+    "packageManager": "npm"
+  },
+  "newProjectRoot": "projects",
+  "projects": {
+    "admin": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "projects/admin",
+      "sourceRoot": "projects/admin/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "projects/admin/src/main.ts",
+            "tsConfig": "projects/admin/tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "projects/admin/public"
+              }
+            ],
+            "styles": [
+              "node_modules/leaflet/dist/leaflet.css",
+              "projects/admin/src/styles.scss"
+            ],
+            "allowedCommonJsDependencies": [
+              "leaflet"
+            ],
+            "outputPath": "dist/admin"
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "900kB",
+                  "maximumError": "2MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kB",
+                  "maximumError": "12kB"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "admin:build:production"
+            },
+            "development": {
+              "buildTarget": "admin:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "proxyConfig": "proxy.conf.mjs",
+            "port": 4200
+          }
+        },
+        "test": {
+          "builder": "@angular/build:unit-test"
+        }
+      }
+    },
+    "driver": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "projects/driver",
+      "sourceRoot": "projects/driver/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "projects/driver/src/main.ts",
+            "tsConfig": "projects/driver/tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "projects/driver/public"
+              }
+            ],
+            "styles": [
+              "node_modules/leaflet/dist/leaflet.css",
+              "projects/driver/src/styles.scss"
+            ],
+            "allowedCommonJsDependencies": [
+              "leaflet"
+            ],
+            "outputPath": "dist/driver"
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "900kB",
+                  "maximumError": "2MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kB",
+                  "maximumError": "12kB"
+                }
+              ],
+              "outputHashing": "all",
+              "serviceWorker": "projects/driver/ngsw-config.json"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "driver:build:production"
+            },
+            "development": {
+              "buildTarget": "driver:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "proxyConfig": "proxy.conf.mjs",
+            "port": 4201
+          }
+        },
+        "test": {
+          "builder": "@angular/build:unit-test"
+        }
+      }
+    },
+    "shared": {
+      "projectType": "library",
+      "root": "projects/shared",
+      "sourceRoot": "projects/shared/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:ng-packagr",
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/shared/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/shared/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "projects/shared/tsconfig.spec.json"
+          }
+        }
+      }
+    }
+  }
+}

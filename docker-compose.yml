@@ -1,0 +1,169 @@
+# RutaExpress: sistema completo con un solo comando.
+#   1) cp .env.example .env   (y cambia los secretos)
+#   2) ./infra/osrm/prepare.sh (una sola vez: descarga y procesa el mapa)
+#   3) docker compose up -d --build
+# Panel: http://localhost  ·  App repartidor: http://localhost/app/  ·  Grafana: http://localhost:3000
+#
+# Solo la infraestructura para desarrollar en local (backend con mvnw y Angular con ng serve):
+#   docker compose up -d postgres redis osrm minio
+
+name: rutaexpress
+
+services:
+  nginx:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: ${REGISTRY:-ghcr.io/rutaexpress}/frontend:${TAG:-latest}
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./infra/nginx/snippets:/etc/nginx/snippets:ro
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: ${REGISTRY:-ghcr.io/rutaexpress}/backend:${TAG:-latest}
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-rutaexpress}
+      DB_USER: ${POSTGRES_USER:-rutaexpress}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}
+      REDIS_HOST: redis
+      OSRM_URL: http://osrm:5000
+      NOMINATIM_URL: ${NOMINATIM_URL:-https://nominatim.openstreetmap.org}
+      NOMINATIM_PUBLIC: ${NOMINATIM_PUBLIC:-true}
+      NOMINATIM_USER_AGENT: ${NOMINATIM_USER_AGENT:-RutaExpress/0.1}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-rutaexpress}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?Define MINIO_ROOT_PASSWORD en .env}
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env (mínimo 32 caracteres)}
+      CORS_ORIGINS: ${PUBLIC_ORIGIN:-http://localhost}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-not-configured}
+      ASSISTANT_ENABLED: ${ASSISTANT_ENABLED:-false}
+      ASSISTANT_MODEL: ${ASSISTANT_MODEL:-claude-sonnet-5-5}
+      ROUTING_ALGORITHM: ${ROUTING_ALGORITHM:-OR_TOOLS}
+      DEMO_DATA: ${DEMO_DATA:-true}
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=70 -XX:+ExitOnOutOfMemoryError"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 40s
+    restart: unless-stopped
+
+  postgres:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-rutaexpress}
+      POSTGRES_USER: ${POSTGRES_USER:-rutaexpress}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rutaexpress} -d ${POSTGRES_DB:-rutaexpress}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    restart: unless-stopped
+
+  # Servidor de rutas propio con el mapa procesado por infra/osrm/prepare.sh
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend:v5.27.1
+    command: ["osrm-routed", "--algorithm", "mld", "--max-table-size", "1000", "/data/region.osrm"]
+    volumes:
+      - ./infra/osrm/data:/data:ro
+    ports:
+      - "127.0.0.1:5000:5000"
+    restart: unless-stopped
+
+  # Geocodificación propia sin límites (opcional, muy pesada): docker compose --profile nominatim up -d
+  nominatim:
+    image: mediagis/nominatim:4.5
+    profiles: ["nominatim"]
+    environment:
+      PBF_URL: ${NOMINATIM_PBF_URL:-https://download.geofabrik.de/europe/spain/valencia-latest.osm.pbf}
+      REPLICATION_URL: ${NOMINATIM_REPLICATION_URL:-https://download.geofabrik.de/europe/spain/valencia-updates/}
+      NOMINATIM_PASSWORD: ${NOMINATIM_PASSWORD:-nominatim}
+    shm_size: 1gb
+    volumes:
+      - nominatim:/var/lib/postgresql/16/main
+    ports:
+      - "127.0.0.1:8088:8080"
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-rutaexpress}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Define MINIO_ROOT_PASSWORD en .env}
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio:/data
+    restart: unless-stopped
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.17.1
+    environment:
+      DATA_SOURCE_NAME: postgresql://${POSTGRES_USER:-rutaexpress}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-rutaexpress}?sslmode=disable
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.4.1
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:12.0.2
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Define GRAFANA_ADMIN_PASSWORD en .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  minio:
+  prometheus:
+  grafana:
+  nominatim:

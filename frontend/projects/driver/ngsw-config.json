@@ -1,0 +1,63 @@
+{
+  "$schema": "../../node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/index.html",
+          "/manifest.webmanifest",
+          "/*.css",
+          "/*.js"
+        ]
+      }
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/**/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "api-route",
+      "urls": [
+        "/api/routes/current",
+        "/api/drivers/me",
+        "/api/loads/current"
+      ],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 20,
+        "maxAge": "1d",
+        "timeout": "5s"
+      }
+    },
+    {
+      "name": "map-tiles",
+      "urls": [
+        "https://tile.openstreetmap.org/**"
+      ],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 400,
+        "maxAge": "7d"
+      }
+    }
+  ],
+  "navigationUrls": [
+    "/**",
+    "!/api/**",
+    "!/ws/**",
+    "!/mcp/**",
+    "!/public/**"
+  ]
+}

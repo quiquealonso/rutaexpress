@@ -1,0 +1,40 @@
+# Producción en la VM de Google Cloud: HTTPS con Let's Encrypt e imágenes publicadas por CI.
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Primer certificado (con nginx ya levantado en el puerto 80):
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm certbot certonly \
+#     --webroot -w /var/www/certbot -d $DOMAIN --email $LETSENCRYPT_EMAIL --agree-tos --no-eff-email
+
+services:
+  nginx:
+    build: !reset null
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?Define DOMAIN en .env}
+    # !override sustituye la lista de volúmenes del fichero base (la config HTTP local no se monta)
+    volumes: !override
+      - ./infra/nginx/snippets:/etc/nginx/snippets:ro
+      - ./infra/nginx/nginx.prod.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - certbot-www:/var/www/certbot:ro
+      - letsencrypt:/etc/letsencrypt:ro
+
+  backend:
+    build: !reset null
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      CORS_ORIGINS: https://${DOMAIN}
+
+  certbot:
+    image: certbot/certbot:v4.0.0
+    profiles: ["certbot"]
+    volumes:
+      - certbot-www:/var/www/certbot
+      - letsencrypt:/etc/letsencrypt
+    # Renovación cada 12 h (solo renueva si faltan menos de 30 días)
+    entrypoint: ["/bin/sh", "-c", "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done"]
+
+volumes:
+  certbot-www:
+  letsencrypt:

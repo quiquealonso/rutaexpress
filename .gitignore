@@ -1,0 +1,21 @@
+# Secretos
+.env
+
+# Backend
+backend/target/
+backend/data/
+*.iml
+.idea/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/e2e/test-results/
+frontend/e2e/playwright-report/
+
+# Mapas procesados de OSRM (se generan con infra/osrm/prepare.sh)
+infra/osrm/data/
+
+.DS_Store
+Thumbs.db

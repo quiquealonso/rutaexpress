@@ -1,0 +1,158 @@
+// Sistema de diseño de RutaExpress: estilo corporativo sobrio (azul marino + grises pizarra).
+// Lo usan las dos apps: `@use '../../shared/src/styles/rx';` y `@include rx.base;`.
+@use '@angular/material' as mat;
+
+/// Tema Material 3 con la paleta de marca encima de la paleta base azul.
+@mixin theme($density: 0) {
+  color-scheme: light;
+  @include mat.theme((
+    color: (primary: mat.$blue-palette, tertiary: mat.$orange-palette),
+    typography: (plain-family: Inter, brand-family: Inter, bold-weight: 600, medium-weight: 500, regular-weight: 400),
+    density: $density,
+  ));
+  @include mat.theme-overrides((
+    primary: #1e3a5f,
+    on-primary: #ffffff,
+    primary-container: #dce6f2,
+    on-primary-container: #0f2340,
+    secondary: #475569,
+    secondary-container: #e8edf3,
+    on-secondary-container: #1e293b,
+    surface: #f5f7fa,
+    surface-dim: #e9edf2,
+    surface-bright: #ffffff,
+    surface-container-lowest: #ffffff,
+    surface-container-low: #ffffff,
+    surface-container: #f0f3f7,
+    surface-container-high: #e9edf2,
+    surface-container-highest: #e2e8f0,
+    on-surface: #0f172a,
+    on-surface-variant: #5b6878,
+    outline: #94a3b8,
+    outline-variant: #e2e8f0,
+    error: #b42318,
+    error-container: #fee4e2,
+    on-error-container: #7a271a,
+  ));
+}
+
+/// Tokens propios (estados, sombras, radios) y estilos base compartidos.
+@mixin base {
+  :root {
+    --rx-navy-950: #0b1625;
+    --rx-navy-900: #0f1f33;
+    --rx-navy-800: #16293f;
+    --rx-navy-700: #1e3a5f;
+    --rx-navy-500: #3b5f8a;
+    --rx-slate-500: #64748b;
+    --rx-slate-300: #cbd5e1;
+    --rx-border: #e2e8f0;
+
+    // Estados: color sólido (iconos, barras, marcadores) + fondo y texto suaves (chips)
+    --rx-ok: #1f7a4d;       --rx-ok-bg: #e3f4ea;      --rx-ok-fg: #14532d;
+    --rx-info: #2f5d8a;     --rx-info-bg: #e3edf8;    --rx-info-fg: #1e3a5f;
+    --rx-warn: #b54708;     --rx-warn-bg: #fdf1e3;    --rx-warn-fg: #7a2e0e;
+    --rx-bad: #b42318;      --rx-bad-bg: #fde8e6;     --rx-bad-fg: #7a271a;
+    --rx-muted-bg: #eef2f6; --rx-muted-fg: #475569;
+
+    --rx-radius: 12px;
+    --rx-radius-sm: 8px;
+    --rx-shadow-sm: 0 1px 2px rgba(15, 23, 42, .06);
+    --rx-shadow: 0 1px 3px rgba(15, 23, 42, .08), 0 4px 12px rgba(15, 23, 42, .04);
+  }
+
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-feature-settings: 'cv11', 'tnum';
+    background: var(--mat-sys-surface);
+    color: var(--mat-sys-on-surface);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font: 600 1.5rem/1.3 Inter, sans-serif; letter-spacing: -0.01em; margin: 0 0 4px; }
+  h2 { font: 600 1.125rem/1.35 Inter, sans-serif; margin: 0; }
+  a { color: var(--rx-navy-700); }
+  code, .mono { font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace; font-size: .9em; letter-spacing: .02em; }
+
+  // ---------- Superficies ----------
+  .mat-mdc-card, .rx-card {
+    --mat-card-elevated-container-shape: var(--rx-radius);
+    --mat-card-outlined-container-shape: var(--rx-radius);
+    border-radius: var(--rx-radius);
+    background: var(--mat-sys-surface-container-lowest);
+    border: 1px solid var(--rx-border);
+    box-shadow: var(--rx-shadow-sm) !important;
+  }
+  .rx-card { padding: 20px; }
+  .rx-page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .rx-page-head p { margin: 2px 0 0; color: var(--mat-sys-on-surface-variant); }
+  .rx-eyebrow { font-size: .75rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--mat-sys-on-surface-variant); }
+  .rx-muted { color: var(--mat-sys-on-surface-variant); }
+
+  // ---------- Chips de estado ----------
+  .chip, .rx-chip {
+    display: inline-flex; align-items: center; gap: 6px; justify-self: start;
+    font-size: .75rem; font-weight: 600; line-height: 1; white-space: nowrap;
+    padding: 5px 10px; border-radius: 999px;
+    background: var(--rx-muted-bg); color: var(--rx-muted-fg);
+    &::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .8; }
+    &.DELIVERED, &.COMPLETED, &.ACTIVE, &.OK, &.LOADED, &.CLOSED { background: var(--rx-ok-bg); color: var(--rx-ok-fg); }
+    &.OUT_FOR_DELIVERY, &.IN_PROGRESS, &.ON_ROUTE, &.PENDING, &.OPEN { background: var(--rx-info-bg); color: var(--rx-info-fg); }
+    &.SKIPPED, &.PLANNED, &.REGISTERED, &.DUPLICATE, &.NOT_EXPECTED { background: var(--rx-warn-bg); color: var(--rx-warn-fg); }
+    &.FAILED, &.FAILED_ATTEMPT, &.RETURNED, &.CANCELLED, &.UNKNOWN { background: var(--rx-bad-bg); color: var(--rx-bad-fg); }
+  }
+
+  // ---------- Tablas ----------
+  table { width: 100%; }
+  .mat-mdc-table {
+    --mat-table-background-color: var(--mat-sys-surface-container-lowest);
+    --mat-table-header-headline-color: var(--mat-sys-on-surface-variant);
+    --mat-table-header-headline-size: .75rem;
+    --mat-table-header-headline-weight: 600;
+    --mat-table-row-item-outline-color: var(--rx-border);
+    border: 1px solid var(--rx-border);
+    border-radius: var(--rx-radius);
+    overflow: hidden;
+  }
+  .mat-mdc-header-row { background: #f8fafc; text-transform: uppercase; letter-spacing: .04em; }
+  .mat-mdc-row:hover { background: #f8fafc; }
+  .mat-mdc-paginator { background: transparent; }
+
+  // ---------- Botones y formularios ----------
+  .mdc-button, .mat-mdc-button-base { letter-spacing: 0; font-weight: 600; }
+  .mat-mdc-unelevated-button:not(:disabled), .mat-mdc-raised-button:not(:disabled) { box-shadow: none; }
+
+  // ---------- Barras de progreso ----------
+  .mat-mdc-progress-bar {
+    --mat-progress-bar-track-height: 6px;
+    --mat-progress-bar-active-indicator-height: 6px;
+    --mat-progress-bar-track-shape: 999px;
+    border-radius: 999px;
+  }
+
+  // ---------- Mapas (Leaflet) ----------
+  // Teselas de OSM desaturadas: el color queda para rutas, paradas y furgonetas
+  .leaflet-container { font-family: Inter, sans-serif; background: #eef1f4; }
+  .leaflet-tile-pane { filter: saturate(.25) brightness(1.04) contrast(.95); }
+  .leaflet-bar { border: 1px solid var(--rx-border) !important; box-shadow: var(--rx-shadow) !important; border-radius: 10px !important; overflow: hidden; }
+  .leaflet-control-attribution { font-size: 10px; }
+  rx-route-map.mini .leaflet-control-zoom { display: none; }
+  // Las capas de Leaflet usan z-index altos: se encierran para que no tapen tarjetas superpuestas
+  rx-route-map, .leaflet-container { isolation: isolate; }
+  .leaflet-tooltip { font: 600 12px Inter, sans-serif; border-radius: 6px; border: 0; box-shadow: var(--rx-shadow); padding: 4px 8px; }
+
+  .rx-stop-marker span {
+    display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+    color: #fff; font: 700 12px Inter, sans-serif; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(15, 23, 42, .35);
+  }
+  .rx-stop-marker.selected span { width: 34px; height: 34px; font-size: 14px; border-width: 3px;
+    box-shadow: 0 0 0 4px rgba(30, 58, 95, .25), 0 2px 6px rgba(15, 23, 42, .35); }
+  .rx-driver-marker span, .rx-depot-marker span {
+    display: grid; place-items: center; width: 34px; height: 34px; color: #fff;
+    border: 3px solid #fff; box-shadow: 0 2px 6px rgba(15, 23, 42, .35);
+    font-family: 'Material Icons'; font-size: 18px; line-height: 1;
+  }
+  .rx-driver-marker span { border-radius: 50%; background: var(--rx-navy-700); }
+  .rx-depot-marker span { border-radius: 8px; background: #475569; }
+}

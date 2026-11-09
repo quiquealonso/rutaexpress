@@ -1,0 +1,16 @@
+# Configuración de gitleaks (workflow "Seguridad"): reglas por defecto + excepciones revisadas a mano.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Valores por defecto de desarrollo, contraseña de los usuarios de demostración y ficheros de ejemplo (no son de producción)"
+paths = [
+  # jwt-secret de desarrollo; en producción JWT_SECRET es obligatorio
+  '''backend/src/main/resources/application\.yml''',
+  '''backend/src/test/resources/.*''',
+  # Contraseña de los usuarios de demostración (DEMO_DATA)
+  '''frontend/e2e/.*\.spec\.ts''',
+  '''scripts/seed-scenario\.py''',
+  # Valores de ejemplo ("cambia-esta..."); los reales solo están en el .env de cada máquina
+  '''(^|/)\.env\.example$''',
+]

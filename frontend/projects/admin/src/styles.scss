@@ -1,0 +1,6 @@
+@use '../../shared/src/styles/rx';
+
+html {
+  @include rx.theme(-1);
+}
+@include rx.base;

@@ -1,0 +1,12 @@
+@use '../../shared/src/styles/rx';
+
+// Tema claro también en el móvil: se lee mejor al sol que el oscuro
+html {
+  @include rx.theme(0);
+}
+@include rx.base;
+
+body {
+  font-size: 16px;
+  -webkit-tap-highlight-color: transparent;
+}

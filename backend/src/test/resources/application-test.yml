@@ -1,0 +1,11 @@
+spring:
+  cache:
+    type: simple
+logging:
+  level:
+    com.rutaexpress: INFO
+rutaexpress:
+  storage:
+    type: local
+    local:
+      path: ./target/test-proofs

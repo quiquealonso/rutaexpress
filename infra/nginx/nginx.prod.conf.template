@@ -1,0 +1,34 @@
+# Producción: HTTPS obligatorio con Let's Encrypt. ${DOMAIN} lo sustituye la imagen oficial de nginx (envsubst).
+limit_req_zone $binary_remote_addr zone=login:10m rate=10r/m;
+limit_req_zone $binary_remote_addr zone=public:10m rate=60r/m;
+
+server {
+    listen 80;
+    server_name ${DOMAIN};
+
+    # Validación de Let's Encrypt
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name ${DOMAIN};
+
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+
+    # HSTS: el resto de cabeceras vienen de snippets/security-headers.inc
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    include /etc/nginx/snippets/common.inc;
+}

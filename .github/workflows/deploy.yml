@@ -1,0 +1,37 @@
+name: Despliegue en la VM
+
+# Se lanza a mano (o tras un CI correcto en main) y actualiza la VM de Google Cloud por SSH.
+# Secretos necesarios: VM_HOST, VM_USER, VM_SSH_KEY. En la VM: repo clonado en ~/rutaexpress con su .env.
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    # Desactivado hasta que exista la VM: variable de repositorio DEPLOY_ENABLED=true y los secretos VM_*
+    if: >-
+      vars.DEPLOY_ENABLED == 'true' &&
+      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: docker compose pull && up -d
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            set -e
+            cd ~/rutaexpress
+            git pull --ff-only
+            export REGISTRY=ghcr.io/${{ github.repository }}
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+            docker image prune -f
