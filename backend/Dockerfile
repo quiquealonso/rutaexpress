@@ -1,5 +1,5 @@
 # --- Compilación ---
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:25-jdk-alpine AS build
 WORKDIR /workspace
 COPY .mvn .mvn
 COPY mvnw pom.xml ./
@@ -10,7 +10,7 @@ RUN ./mvnw -q -B package -DskipTests \
 
 # --- Ejecución (capas separadas: las dependencias se cachean entre versiones) ---
 # OR-Tools trae librerías nativas compiladas para glibc: se usa una imagen Debian/Ubuntu, no Alpine
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:25-jre-jammy
 RUN apt-get update && apt-get install -y --no-install-recommends wget && rm -rf /var/lib/apt/lists/* \
     && groupadd --system app && useradd --system --gid app --home /app app
 WORKDIR /app
