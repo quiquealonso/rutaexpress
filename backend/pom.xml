@@ -26,7 +26,7 @@
         <ortools.version>9.12.4544</ortools.version>
         <zxing.version>3.5.3</zxing.version>
         <openpdf.version>2.0.3</openpdf.version>
-        <minio.version>8.6.0</minio.version>
+        <minio.version>9.0.4</minio.version>
         <logstash-encoder.version>8.1</logstash-encoder.version>
         <archunit.version>1.4.1</archunit.version>
     </properties>
