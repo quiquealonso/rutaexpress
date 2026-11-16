@@ -9,7 +9,7 @@ RUN npx ng build admin \
     && npx ng build driver --base-href /app/
 
 # --- Nginx con los estáticos compilados ---
-FROM nginx:1.27-alpine
+FROM nginx:1.31-alpine
 COPY --from=build /workspace/dist/admin/browser /usr/share/nginx/html/admin
 COPY --from=build /workspace/dist/driver/browser /usr/share/nginx/html/app
 EXPOSE 80 443
