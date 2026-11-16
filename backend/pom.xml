@@ -28,7 +28,7 @@
         <openpdf.version>2.0.3</openpdf.version>
         <minio.version>8.6.0</minio.version>
         <logstash-encoder.version>8.1</logstash-encoder.version>
-        <archunit.version>1.4.1</archunit.version>
+        <archunit.version>1.5.1</archunit.version>
     </properties>
 
     <dependencyManagement>
